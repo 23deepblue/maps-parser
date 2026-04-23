@@ -179,6 +179,7 @@
       text-transform: uppercase;
     }
 
+    .name-label { color: #ff79c6; }
     .lat-label  { color: var(--accent); }
     .lng-label  { color: var(--accent2); }
     .src-label  { color: #ffb347; }
@@ -250,6 +251,13 @@
 
       <div class="field">
         <div class="field-header">
+          <span class="field-label name-label">🏷️ Link นี้ คือ</span>
+        </div>
+        <div class="field-value" data-ref="name-val">—</div>
+      </div>
+
+      <div class="field">
+        <div class="field-header">
           <span class="field-label lat-label">📌 Latitude</span>
           <button class="copy-btn" onclick="copyVal('lat-val', this)">copy</button>
         </div>
@@ -309,6 +317,21 @@
     document.querySelector('[data-ref="lat-val"]').textContent = latMatch[1];
     document.querySelector('[data-ref="lng-val"]').textContent = lngMatch[1];
     document.querySelector('[data-ref="src-val"]').textContent = src;
+
+    // Extract !2z (place name) — Base64 encoded UTF-8
+    const nameEl = document.querySelector('[data-ref="name-val"]');
+    const nameMatch = src.match(/!2z([A-Za-z0-9+/=_-]+)/);
+    if (nameMatch) {
+      try {
+        const base64 = nameMatch[1].replace(/-/g, '+').replace(/_/g, '/');
+        const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+        nameEl.textContent = new TextDecoder('utf-8').decode(bytes);
+      } catch {
+        nameEl.textContent = '— ถอดรหัสไม่ได้';
+      }
+    } else {
+      nameEl.textContent = '— ไม่พบชื่อสถานที่ใน URL นี้';
+    }
 
     resEl.className = 'result show';
 

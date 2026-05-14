@@ -219,6 +219,51 @@
     }
     .error-box.show { display: block; animation: fadeUp .2s ease; }
 
+    .warn-box {
+      display: none;
+      background: rgba(255,179,0,.07);
+      border: 1px solid rgba(255,179,0,.35);
+      border-radius: 10px;
+      overflow: hidden;
+      animation: fadeUp .3s ease;
+    }
+    .warn-box.show { display: block; }
+
+    .warn-header {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      padding: .7rem 1rem;
+      background: rgba(255,179,0,.1);
+      border-bottom: 1px solid rgba(255,179,0,.2);
+    }
+    .warn-header span { font-size: .8rem; font-weight: 700; color: #ffb300; letter-spacing: .05em; }
+
+    .warn-body {
+      padding: .8rem 1rem;
+      font-size: .8rem;
+      color: #e8c97a;
+      line-height: 1.7;
+      font-family: var(--sans);
+    }
+
+    .warn-tokens {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .4rem;
+      margin-top: .6rem;
+    }
+
+    .warn-token {
+      background: rgba(255,179,0,.15);
+      border: 1px solid rgba(255,179,0,.3);
+      color: #ffd54f;
+      font-family: var(--mono);
+      font-size: .72rem;
+      padding: .15rem .5rem;
+      border-radius: 4px;
+    }
+
     .divider {
       height: 1px;
       background: var(--border);
@@ -246,12 +291,24 @@
 
     <div class="error-box" data-ref="error"></div>
 
+    <div class="warn-box" data-ref="warn">
+      <div class="warn-header">
+        <span>⚠️ ตรวจพบ Hex Pattern — อาจถูก Backend Block</span>
+      </div>
+      <div class="warn-body">
+        src URL นี้มี pattern <code style="color:#ffd54f;">0x[hex]</code> ซึ่ง security filter อาจตีความเป็น SQL Injection แล้ว block request ทันที
+        <br>พบ token ดังนี้:
+        <div class="warn-tokens" data-ref="warn-tokens"></div>
+      </div>
+    </div>
+
     <div class="result" data-ref="result">
       <div class="result-title">ผลลัพธ์</div>
 
       <div class="field">
         <div class="field-header">
-          <span class="field-label name-label">🏷️ Link นี้ คือ</span>
+          <span class="field-label name-label">🏷️ ชื่อสถานที่</span>
+          <button class="copy-btn" onclick="copyVal('name-val', this)">copy</button>
         </div>
         <div class="field-value" data-ref="name-val">—</div>
       </div>
@@ -291,6 +348,7 @@
 
     errEl.className = 'error-box';
     resEl.className = 'result';
+    document.querySelector('[data-ref="warn"]').className = 'warn-box';
 
     if (!raw) {
       showErr('กรุณาวาง iframe code ก่อนนะ 🙏');
@@ -334,6 +392,20 @@
     }
 
     resEl.className = 'result show';
+
+    // Detect 0x[hex] patterns — may trigger backend SQL injection filter
+    const warnEl    = document.querySelector('[data-ref="warn"]');
+    const tokensEl  = document.querySelector('[data-ref="warn-tokens"]');
+    const hexTokens = [...new Set(src.match(/0x[0-9a-fA-F]+/gi) || [])];
+
+    if (hexTokens.length > 0) {
+      tokensEl.innerHTML = hexTokens
+        .map(t => `<span class="warn-token">${t}</span>`)
+        .join('');
+      warnEl.className = 'warn-box show';
+    } else {
+      warnEl.className = 'warn-box';
+    }
 
     // reset copy buttons
     document.querySelectorAll('.copy-btn').forEach(b => {

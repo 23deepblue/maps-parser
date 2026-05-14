@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Maps Embed Parser</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Kanit:wght@300;500;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --surface2: #1a1a26;
+      --border: #2a2a3d;
+      --accent: #4fffb0;
+      --accent2: #7c6bff;
+      --text: #e8e8f0;
+      --muted: #6b6b88;
+      --err: #ff5f72;
+      --mono: 'Space Mono', monospace;
+      --sans: 'Kanit', sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+      background-image:
+        radial-gradient(ellipse 60% 40% at 70% 10%, rgba(124,107,255,.12) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 30% at 20% 90%, rgba(79,255,176,.08) 0%, transparent 60%);
+    }
+
+    .card {
+      width: 100%;
+      max-width: 720px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 32px 80px rgba(0,0,0,.6);
+    }
+
+    .header {
+      padding: 1.5rem 2rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: var(--surface2);
+    }
+
+    .icon {
+      width: 40px; height: 40px;
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+
+    .header-text h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: .03em;
+      color: var(--text);
+    }
+
+    .header-text p {
+      font-size: .8rem;
+      color: var(--muted);
+      font-weight: 300;
+    }
+
+    .body { padding: 2rem; display: flex; flex-direction: column; gap: 1.5rem; }
+
+    label {
+      display: block;
+      font-size: .75rem;
+      font-weight: 500;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: .5rem;
+    }
+
+    textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: .78rem;
+      line-height: 1.6;
+      padding: 1rem;
+      resize: vertical;
+      min-height: 110px;
+      transition: border-color .2s;
+      outline: none;
+    }
+
+    textarea::placeholder { color: var(--muted); }
+    textarea:focus { border-color: var(--accent2); }
+
+    .btn {
+      align-self: flex-start;
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      color: #000;
+      font-family: var(--sans);
+      font-weight: 700;
+      font-size: .85rem;
+      letter-spacing: .05em;
+      padding: .65rem 1.6rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: opacity .2s, transform .15s;
+    }
+    .btn:hover { opacity: .9; transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+
+    /* Result area */
+    .result {
+      display: none;
+      flex-direction: column;
+      gap: .8rem;
+      animation: fadeUp .3s ease;
+    }
+    .result.show { display: flex; }
+
+    @keyframes fadeUp {
+      from { opacity:0; transform:translateY(8px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    .result-title {
+      font-size: .75rem;
+      font-weight: 500;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+    .result-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .field {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .field-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: .55rem 1rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface2);
+    }
+
+    .field-label {
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .name-label { color: #ff79c6; }
+    .lat-label  { color: var(--accent); }
+    .lng-label  { color: var(--accent2); }
+    .src-label  { color: #ffb347; }
+
+    .copy-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: .65rem;
+      padding: .2rem .55rem;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: color .15s, border-color .15s;
+    }
+    .copy-btn:hover { color: var(--text); border-color: var(--text); }
+    .copy-btn.copied { color: var(--accent); border-color: var(--accent); }
+
+    .field-value {
+      font-family: var(--mono);
+      font-size: .82rem;
+      padding: .8rem 1rem;
+      color: var(--text);
+      word-break: break-all;
+      line-height: 1.6;
+    }
+
+    .error-box {
+      display: none;
+      background: rgba(255,95,114,.1);
+      border: 1px solid rgba(255,95,114,.3);
+      border-radius: 10px;
+      padding: .8rem 1rem;
+      font-size: .82rem;
+      color: var(--err);
+      font-family: var(--mono);
+    }
+    .error-box.show { display: block; animation: fadeUp .2s ease; }
+
+    .warn-box {
+      display: none;
+      background: rgba(255,179,0,.07);
+      border: 1px solid rgba(255,179,0,.35);
+      border-radius: 10px;
+      overflow: hidden;
+      animation: fadeUp .3s ease;
+    }
+    .warn-box.show { display: block; }
+
+    .warn-header {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      padding: .7rem 1rem;
+      background: rgba(255,179,0,.1);
+      border-bottom: 1px solid rgba(255,179,0,.2);
+    }
+    .warn-header span { font-size: .8rem; font-weight: 700; color: #ffb300; letter-spacing: .05em; }
+
+    .warn-body {
+      padding: .8rem 1rem;
+      font-size: .8rem;
+      color: #e8c97a;
+      line-height: 1.7;
+      font-family: var(--sans);
+    }
+
+    .warn-tokens {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .4rem;
+      margin-top: .6rem;
+    }
+
+    .warn-token {
+      background: rgba(255,179,0,.15);
+      border: 1px solid rgba(255,179,0,.3);
+      color: #ffd54f;
+      font-family: var(--mono);
+      font-size: .72rem;
+      padding: .15rem .5rem;
+      border-radius: 4px;
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="header">
+    <div class="icon">📍</div>
+    <div class="header-text">
+      <h1>Maps Embed Parser</h1>
+      <p>ถอดค่า lat / lng / src จาก Google Maps iframe</p>
+    </div>
+  </div>
+
+  <div class="body">
+    <div>
+      <label>วาง iframe code ตรงนี้</label>
+      <textarea data-ref="input" placeholder='<iframe src="https://www.google.com/maps/embed?pb=..." ...></iframe>'></textarea>
+    </div>
+
+    <button class="btn" onclick="parse()">⚡ Parse ได้เลย</button>
+
+    <div class="error-box" data-ref="error"></div>
+
+    <div class="warn-box" data-ref="warn">
+      <div class="warn-header">
+        <span>⚠️ ตรวจพบ Hex Pattern — อาจถูก Backend Block</span>
+      </div>
+      <div class="warn-body">
+        src URL นี้มี pattern <code style="color:#ffd54f;">0x[hex]</code> ซึ่ง security filter อาจตีความเป็น SQL Injection แล้ว block request ทันที
+        <br>พบ token ดังนี้:
+        <div class="warn-tokens" data-ref="warn-tokens"></div>
+      </div>
+    </div>
+
+    <div class="result" data-ref="result">
+      <div class="result-title">ผลลัพธ์</div>
+
+      <div class="field">
+        <div class="field-header">
+          <span class="field-label name-label">🏷️ ชื่อสถานที่</span>
+          <button class="copy-btn" onclick="copyVal('name-val', this)">copy</button>
+        </div>
+        <div class="field-value" data-ref="name-val">—</div>
+      </div>
+
+      <div class="field">
+        <div class="field-header">
+          <span class="field-label lat-label">📌 Latitude</span>
+          <button class="copy-btn" onclick="copyVal('lat-val', this)">copy</button>
+        </div>
+        <div class="field-value" data-ref="lat-val">—</div>
+      </div>
+
+      <div class="field">
+        <div class="field-header">
+          <span class="field-label lng-label">🌐 Longitude</span>
+          <button class="copy-btn" onclick="copyVal('lng-val', this)">copy</button>
+        </div>
+        <div class="field-value" data-ref="lng-val">—</div>
+      </div>
+
+      <div class="field">
+        <div class="field-header">
+          <span class="field-label src-label">🔗 src URL</span>
+          <button class="copy-btn" onclick="copyVal('src-val', this)">copy</button>
+        </div>
+        <div class="field-value" data-ref="src-val">—</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function parse() {
+    const raw = document.querySelector('[data-ref="input"]').value.trim();
+    const errEl = document.querySelector('[data-ref="error"]');
+    const resEl = document.querySelector('[data-ref="result"]');
+
+    errEl.className = 'error-box';
+    resEl.className = 'result';
+    document.querySelector('[data-ref="warn"]').className = 'warn-box';
+
+    if (!raw) {
+      showErr('กรุณาวาง iframe code ก่อนนะ 🙏');
+      return;
+    }
+
+    // Extract src
+    const srcMatch = raw.match(/src=["']([^"']+)["']/);
+    if (!srcMatch) {
+      showErr('ไม่เจอ src attribute — โค้ดถูกต้องไหม?');
+      return;
+    }
+    const src = srcMatch[1];
+
+    // Extract !2d (longitude) and !3d (latitude) from the pb parameter
+    const lngMatch = src.match(/!2d(-?\d+\.\d+)/);
+    const latMatch = src.match(/!3d(-?\d+\.\d+)/);
+
+    if (!latMatch || !lngMatch) {
+      showErr('ไม่เจอค่า lat/lng ใน URL — อาจไม่ใช่ Google Maps embed ที่มี coordinates นะ');
+      return;
+    }
+
+    document.querySelector('[data-ref="lat-val"]').textContent = latMatch[1];
+    document.querySelector('[data-ref="lng-val"]').textContent = lngMatch[1];
+    document.querySelector('[data-ref="src-val"]').textContent = src;
+
+    // Extract !2z (place name) — Base64 encoded UTF-8
+    const nameEl = document.querySelector('[data-ref="name-val"]');
+    const nameMatch = src.match(/!2z([A-Za-z0-9+/=_-]+)/);
+    if (nameMatch) {
+      try {
+        const base64 = nameMatch[1].replace(/-/g, '+').replace(/_/g, '/');
+        const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+        nameEl.textContent = new TextDecoder('utf-8').decode(bytes);
+      } catch {
+        nameEl.textContent = '— ถอดรหัสไม่ได้';
+      }
+    } else {
+      nameEl.textContent = '— ไม่พบชื่อสถานที่ใน URL นี้';
+    }
+
+    resEl.className = 'result show';
+
+    // Detect 0x[hex] patterns — may trigger backend SQL injection filter
+    const warnEl    = document.querySelector('[data-ref="warn"]');
+    const tokensEl  = document.querySelector('[data-ref="warn-tokens"]');
+    const hexTokens = [...new Set(src.match(/0x[0-9a-fA-F]+/gi) || [])];
+
+    if (hexTokens.length > 0) {
+      tokensEl.innerHTML = hexTokens
+        .map(t => `<span class="warn-token">${t}</span>`)
+        .join('');
+      warnEl.className = 'warn-box show';
+    } else {
+      warnEl.className = 'warn-box';
+    }
+
+    // reset copy buttons
+    document.querySelectorAll('.copy-btn').forEach(b => {
+      b.textContent = 'copy';
+      b.classList.remove('copied');
+    });
+  }
+
+  function showErr(msg) {
+    const el = document.querySelector('[data-ref="error"]');
+    el.textContent = '⚠️ ' + msg;
+    el.className = 'error-box show';
+  }
+
+  function copyVal(ref, btn) {
+    const text = document.querySelector(`[data-ref="${ref}"]`).textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'copied ✓';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'copy';
+        btn.classList.remove('copied');
+      }, 2000);
+    });
+  }
+
+  // Allow Enter to trigger parse from textarea via Ctrl+Enter
+  document.querySelector('[data-ref="input"]').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.ctrlKey) parse();
+  });
+</script>
+</body>
+</html>

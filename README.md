@@ -12,7 +12,7 @@
 
 ## 🧩 มันทำอะไร
 
-วาง `<iframe>` embed code จาก Google Maps แล้ว utility นี้จะถอดค่าออกมา 4 อย่าง:
+วาง `<iframe>` embed code จาก Google Maps แล้ว utility นี้จะถอดค่าออกมา 4 อย่าง พร้อมระบบเตือนอัตโนมัติ:
 
 | ค่า | ตัวอย่าง |
 |---|---|
@@ -20,6 +20,12 @@
 | **Latitude** | `17.17401074527428` |
 | **Longitude** | `99.61539459563596` |
 | **src URL** | `https://www.google.com/maps/embed?pb=...` |
+
+### ⚠️ Hex Pattern Warning
+
+Google Maps embed URL มักมี Place ID ในรูปแบบ `0x[hex]` เช่น `0x30def30067fa8faf` ซึ่ง backend บางระบบมี security filter ที่ตีความ pattern นี้ว่าเป็น SQL Injection แล้ว block request ทันที
+
+ระบบจะแสดง warning box พร้อม list token ที่เจอทั้งหมดทันทีหลัง parse — เพื่อให้รู้ล่วงหน้าก่อนส่ง URL ไปหลังบ้าน
 
 ---
 
@@ -49,6 +55,7 @@
 | Longitude | `!2d{value}` |
 | Latitude | `!3d{value}` |
 | src | `src="..."` attribute |
+| Hex tokens | `0x[0-9a-fA-F]+` → แสดง warning ถ้าเจอ |
 
 ---
 

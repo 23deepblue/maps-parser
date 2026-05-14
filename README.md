@@ -1,6 +1,6 @@
 # 📍 Maps Embed Parser
 
-> ถอดค่า **Latitude**, **Longitude** และ **src URL** จาก Google Maps iframe embed code — ไม่ต้องติดตั้งอะไรทั้งนั้น เปิดเว็บแล้วใช้ได้เลย
+> ถอดค่า **ชื่อสถานที่**, **Latitude**, **Longitude** และ **src URL** จาก Google Maps iframe embed code — ไม่ต้องติดตั้งอะไรทั้งนั้น เปิดเว็บแล้วใช้ได้เลย
 
 ---
 
@@ -12,10 +12,11 @@
 
 ## 🧩 มันทำอะไร
 
-วาง `<iframe>` embed code จาก Google Maps แล้ว utility นี้จะถอดค่าออกมา 3 อย่าง:
+วาง `<iframe>` embed code จาก Google Maps แล้ว utility นี้จะถอดค่าออกมา 4 อย่าง:
 
 | ค่า | ตัวอย่าง |
 |---|---|
+| **ชื่อสถานที่** | `โรงพยาบาลแม่สอด` |
 | **Latitude** | `17.17401074527428` |
 | **Longitude** | `99.61539459563596` |
 | **src URL** | `https://www.google.com/maps/embed?pb=...` |
@@ -34,16 +35,17 @@
 
 **3.** กดปุ่ม **⚡ Parse ได้เลย** (หรือกด `Ctrl + Enter`)
 
-**4.** ค่า Latitude, Longitude และ src จะปรากฏ — กดปุ่ม **copy** ข้างแต่ละค่าได้เลย
+**4.** ค่า ชื่อสถานที่, Latitude, Longitude และ src จะปรากฏ — กดปุ่ม **copy** ข้างแต่ละค่าได้เลย
 
 ---
 
 ## ⚙️ วิธีทำงาน
 
-ดึงค่าจาก Google Maps URL format ด้วย Regular Expression:
+ดึงค่าจาก Google Maps URL format ด้วย Regular Expression และ Base64 decoding:
 
-| ค่า | Pattern |
+| ค่า | วิธีดึง |
 |---|---|
+| ชื่อสถานที่ | `!2z{base64}` → decode UTF-8 |
 | Longitude | `!2d{value}` |
 | Latitude | `!3d{value}` |
 | src | `src="..."` attribute |
